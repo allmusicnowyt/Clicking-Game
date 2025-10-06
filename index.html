@@ -1,219 +1,173 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Click Game Deluxe</title>
-  <style>
-    body {
-      font-family: "Poppins", sans-serif;
-      background: linear-gradient(135deg, #141e30, #243b55);
-      color: #f1f1f1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      overflow: hidden;
-      margin: 0;
-    }
-
-    h1 {
-      font-size: 2rem;
-      margin-bottom: 15px;
-      letter-spacing: 1px;
-    }
-
-    #clickButton {
-      font-size: 22px;
-      padding: 20px 40px;
-      border: none;
-      border-radius: 50%;
-      background: radial-gradient(circle at center, #00b4d8, #0077b6);
-      color: white;
-      cursor: pointer;
-      transition: transform 0.1s ease, box-shadow 0.2s ease;
-      box-shadow: 0 0 20px rgba(0, 180, 216, 0.6);
-    }
-
-    #clickButton:hover {
-      transform: scale(1.05);
-      box-shadow: 0 0 30px rgba(0, 180, 216, 0.9);
-    }
-
-    #clickButton:active {
-      transform: scale(0.95);
-    }
-
-    .stats {
-      margin-top: 25px;
-      font-size: 1.2rem;
-      text-align: center;
-    }
-
-    .shop {
-      margin-top: 25px;
-      padding: 20px;
-      border: 2px solid #00b4d8;
-      border-radius: 10px;
-      width: 300px;
-      text-align: center;
-      background: rgba(0, 0, 0, 0.3);
-    }
-
-    .shop h2 {
-      margin: 0 0 10px;
-      color: #00b4d8;
-    }
-
-    button.upgrade {
-      margin-top: 10px;
-      padding: 10px 20px;
-      background: linear-gradient(135deg, #0077b6, #0096c7);
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: background 0.3s, transform 0.1s;
-    }
-
-    button.upgrade:hover {
-      background: linear-gradient(135deg, #0096c7, #00b4d8);
-      transform: scale(1.03);
-    }
-
-    button.upgrade:disabled {
-      background: gray;
-      cursor: not-allowed;
-    }
-
-    .floating {
-      position: absolute;
-      color: #00ffae;
-      font-weight: bold;
-      pointer-events: none;
-      animation: floatUp 1s ease-out forwards;
-    }
-
-    @keyframes floatUp {
-      from { opacity: 1; transform: translateY(0); }
-      to { opacity: 0; transform: translateY(-50px); }
-    }
-
-    .message {
-      position: fixed;
-      bottom: 30px;
-      background: #ef233c;
-      padding: 10px 20px;
-      border-radius: 8px;
-      color: white;
-      opacity: 0.9;
-      font-size: 1rem;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Click Game</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    background: linear-gradient(to right, #222, #555);
+    color: white;
+    overflow: hidden;
+  }
+  h1 {
+    font-size: 2em;
+    margin-top: 20px;
+  }
+  button {
+    background: #ff4747;
+    border: none;
+    color: white;
+    padding: 15px 30px;
+    margin: 10px;
+    border-radius: 10px;
+    font-size: 1.2em;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+  button:hover {
+    background: #ff3030;
+    transform: scale(1.05);
+  }
+  .store {
+    margin-top: 30px;
+  }
+  .coin {
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    background: radial-gradient(circle, gold 60%, #b8860b);
+    border-radius: 50%;
+    box-shadow: 0 0 15px gold;
+    cursor: pointer;
+    animation: bounce 1s infinite alternate, fadein 0.5s;
+  }
+  @keyframes bounce {
+    from { transform: translateY(0); }
+    to { transform: translateY(-15px); }
+  }
+  @keyframes fadein {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+</style>
 </head>
 <body>
-  <h1>💎 Click Game Deluxe 💎</h1>
-  <button id="clickButton">Click Me!</button>
+<h1>🔥 Clicker Game 🔥</h1>
+<h2>Points: <span id="points">0</span></h2>
 
-  <div class="stats">
-    <p>Points: <span id="points">0</span></p>
-    <p>Points per click: <span id="perClick">1</span></p>
-    <p>Auto clickers: <span id="autoClickers">0</span></p>
-    <p>High Score (local): <span id="highScore">0</span></p>
-  </div>
+<button id="clickButton">Click Me!</button>
 
-  <div class="shop">
-    <h2>🛒 Shop</h2>
-    <button class="upgrade" id="buyClickPower">+1 Per Click (Cost: 25)</button><br>
-    <button class="upgrade" id="buyAutoClicker">Auto Clicker (Cost: 50)</button>
-  </div>
+<div class="store">
+  <h3>Shop</h3>
+  <button id="autoClickerBtn">Buy Auto Clicker (50 pts)</button>
+  <button id="doubleClickBtn">Buy Double Click (25 pts)</button>
+</div>
 
-  <script>
-    let points = 0;
-    let perClick = 1;
-    let autoClickers = 0;
-    let highScore = parseInt(localStorage.getItem("highScore") || "0");
-    let clickPowerCost = 25;
-    let autoClickerCost = 50;
+<button id="resetBtn" style="background:#444;">Reset Progress</button>
 
-    const pointsEl = document.getElementById("points");
-    const perClickEl = document.getElementById("perClick");
-    const autoClickersEl = document.getElementById("autoClickers");
-    const highScoreEl = document.getElementById("highScore");
-    const clickButton = document.getElementById("clickButton");
-    const buyClickPower = document.getElementById("buyClickPower");
-    const buyAutoClicker = document.getElementById("buyAutoClicker");
+<audio id="clickSound" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
+<audio id="buySound" src="https://actions.google.com/sounds/v1/cartoon/cartoon_boing.ogg"></audio>
+<audio id="coinSound" src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg"></audio>
 
-    highScoreEl.textContent = highScore;
+<script>
+  let points = parseInt(localStorage.getItem("points")) || 0;
+  let autoClickers = parseInt(localStorage.getItem("autoClickers")) || 0;
+  let doubleClick = JSON.parse(localStorage.getItem("doubleClick")) || false;
 
-    // Animate click and floating text
-    clickButton.addEventListener("click", (e) => {
-      points += perClick;
+  const pointsDisplay = document.getElementById("points");
+  const clickButton = document.getElementById("clickButton");
+  const autoClickerBtn = document.getElementById("autoClickerBtn");
+  const doubleClickBtn = document.getElementById("doubleClickBtn");
+  const resetBtn = document.getElementById("resetBtn");
+  const clickSound = document.getElementById("clickSound");
+  const buySound = document.getElementById("buySound");
+  const coinSound = document.getElementById("coinSound");
+
+  function updateDisplay() {
+    pointsDisplay.textContent = points;
+    localStorage.setItem("points", points);
+    localStorage.setItem("autoClickers", autoClickers);
+    localStorage.setItem("doubleClick", JSON.stringify(doubleClick));
+  }
+
+  clickButton.addEventListener("click", () => {
+    clickSound.currentTime = 0;
+    clickSound.play();
+    points += doubleClick ? 2 : 1;
+    updateDisplay();
+  });
+
+  autoClickerBtn.addEventListener("click", () => {
+    if (points >= 50) {
+      buySound.currentTime = 0;
+      buySound.play();
+      points -= 50;
+      autoClickers += 1;
       updateDisplay();
-
-      const float = document.createElement("div");
-      float.className = "floating";
-      float.textContent = `+${perClick}`;
-      float.style.left = e.pageX + "px";
-      float.style.top = e.pageY - 20 + "px";
-      document.body.appendChild(float);
-      setTimeout(() => float.remove(), 1000);
-    });
-
-    // Upgrade: per click
-    buyClickPower.addEventListener("click", () => {
-      if (points >= clickPowerCost) {
-        points -= clickPowerCost;
-        perClick++;
-        clickPowerCost = Math.round(clickPowerCost * 1.5); // increase cost
-        buyClickPower.textContent = `+1 Per Click (Cost: ${clickPowerCost})`;
-        updateDisplay();
-      } else {
-        showMessage("Not enough points!");
-      }
-    });
-
-    // Upgrade: auto clicker
-    buyAutoClicker.addEventListener("click", () => {
-      if (points >= autoClickerCost) {
-        points -= autoClickerCost;
-        autoClickers++;
-        autoClickerCost = Math.round(autoClickerCost * 1.7); // increase cost
-        buyAutoClicker.textContent = `Auto Clicker (Cost: ${autoClickerCost})`;
-        updateDisplay();
-      } else {
-        showMessage("Not enough points!");
-      }
-    });
-
-    // Auto clickers tick
-    setInterval(() => {
-      if (autoClickers > 0) {
-        points += autoClickers;
-        updateDisplay();
-      }
-    }, 1000);
-
-    function updateDisplay() {
-      pointsEl.textContent = points;
-      perClickEl.textContent = perClick;
-      autoClickersEl.textContent = autoClickers;
-
-      if (points > highScore) {
-        highScore = points;
-        localStorage.setItem("highScore", highScore);
-        highScoreEl.textContent = highScore;
-      }
     }
+  });
 
-    function showMessage(text) {
-      const msg = document.createElement("div");
-      msg.className = "message";
-      msg.textContent = text;
-      document.body.appendChild(msg);
-      setTimeout(() => msg.remove(), 2000);
+  doubleClickBtn.addEventListener("click", () => {
+    if (points >= 25 && !doubleClick) {
+      buySound.currentTime = 0;
+      buySound.play();
+      points -= 25;
+      doubleClick = true;
+      updateDisplay();
     }
-  </script>
+  });
+
+  resetBtn.addEventListener("click", () => {
+    if (confirm("Are you sure you want to reset all progress?")) {
+      localStorage.clear();
+      points = 0;
+      autoClickers = 0;
+      doubleClick = false;
+      updateDisplay();
+    }
+  });
+
+  // Auto Clicker
+  setInterval(() => {
+    if (autoClickers > 0) {
+      points += autoClickers;
+      updateDisplay();
+    }
+  }, 1000);
+
+  // Random Golden Coin spawn
+  function spawnCoin() {
+    if (Math.random() < 0.25) { // 25% chance
+      const coin = document.createElement("div");
+      coin.classList.add("coin");
+      coin.style.top = Math.random() * (window.innerHeight - 100) + "px";
+      coin.style.left = Math.random() * (window.innerWidth - 100) + "px";
+
+      document.body.appendChild(coin);
+
+      coin.addEventListener("click", () => {
+        coinSound.currentTime = 0;
+        coinSound.play();
+        points *= 2;
+        updateDisplay();
+        coin.remove();
+      });
+
+      setTimeout(() => {
+        coin.remove();
+      }, 4000);
+    }
+  }
+
+  // Spawn a coin every 5 seconds
+  setInterval(spawnCoin, 5000);
+
+  // Load previous data
+  updateDisplay();
+</script>
 </body>
 </html>
+
