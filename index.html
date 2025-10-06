@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Click Game</title>
+<title>Clicker Game Deluxe</title>
 <style>
   body {
     font-family: Arial, sans-serif;
@@ -44,17 +44,26 @@
     cursor: pointer;
     animation: bounce 1s infinite alternate, fadein 0.5s;
   }
-  @keyframes bounce {
-    from { transform: translateY(0); }
-    to { transform: translateY(-15px); }
+  @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-15px); } }
+  @keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
+  .sparkle {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: gold;
+    border-radius: 50%;
+    opacity: 0.8;
+    pointer-events: none;
+    animation: sparkleAnim 0.6s linear forwards;
   }
-  @keyframes fadein {
-    from { opacity: 0; }
-    to { opacity: 1; }
+  @keyframes sparkleAnim {
+    0% { transform: scale(1) translateY(0); opacity: 1; }
+    100% { transform: scale(0) translateY(-50px); opacity: 0; }
   }
 </style>
 </head>
 <body>
+
 <h1>🔥 Clicker Game 🔥</h1>
 <h2>Points: <span id="points">0</span></h2>
 
@@ -67,107 +76,141 @@
 </div>
 
 <button id="resetBtn" style="background:#444;">Reset Progress</button>
+<button id="musicBtn" style="background:#008080;">Music On</button>
 
+<!-- Sound Effects -->
 <audio id="clickSound" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
 <audio id="buySound" src="https://actions.google.com/sounds/v1/cartoon/cartoon_boing.ogg"></audio>
 <audio id="coinSound" src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg"></audio>
 
+<!-- Background Music -->
+<audio id="bgMusic" loop autoplay>
+  <source src="https://files.freemusicarchive.org/storage-freemusicarchive-org/music/ccCommunity/Komiku/Chiptune/Komiku_-_07_-_Adventure_Begins.mp3" type="audio/mpeg">
+</audio>
+
 <script>
-  let points = parseInt(localStorage.getItem("points")) || 0;
-  let autoClickers = parseInt(localStorage.getItem("autoClickers")) || 0;
-  let doubleClick = JSON.parse(localStorage.getItem("doubleClick")) || false;
+let points = parseInt(localStorage.getItem("points")) || 0;
+let autoClickers = parseInt(localStorage.getItem("autoClickers")) || 0;
+let doubleClick = JSON.parse(localStorage.getItem("doubleClick")) || false;
 
-  const pointsDisplay = document.getElementById("points");
-  const clickButton = document.getElementById("clickButton");
-  const autoClickerBtn = document.getElementById("autoClickerBtn");
-  const doubleClickBtn = document.getElementById("doubleClickBtn");
-  const resetBtn = document.getElementById("resetBtn");
-  const clickSound = document.getElementById("clickSound");
-  const buySound = document.getElementById("buySound");
-  const coinSound = document.getElementById("coinSound");
+const pointsDisplay = document.getElementById("points");
+const clickButton = document.getElementById("clickButton");
+const autoClickerBtn = document.getElementById("autoClickerBtn");
+const doubleClickBtn = document.getElementById("doubleClickBtn");
+const resetBtn = document.getElementById("resetBtn");
+const musicBtn = document.getElementById("musicBtn");
 
-  function updateDisplay() {
-    pointsDisplay.textContent = points;
-    localStorage.setItem("points", points);
-    localStorage.setItem("autoClickers", autoClickers);
-    localStorage.setItem("doubleClick", JSON.stringify(doubleClick));
-  }
+const clickSound = document.getElementById("clickSound");
+const buySound = document.getElementById("buySound");
+const coinSound = document.getElementById("coinSound");
+const bgMusic = document.getElementById("bgMusic");
 
-  clickButton.addEventListener("click", () => {
-    clickSound.currentTime = 0;
-    clickSound.play();
-    points += doubleClick ? 2 : 1;
-    updateDisplay();
-  });
+let musicPlaying = true;
 
-  autoClickerBtn.addEventListener("click", () => {
-    if (points >= 50) {
-      buySound.currentTime = 0;
-      buySound.play();
-      points -= 50;
-      autoClickers += 1;
-      updateDisplay();
-    }
-  });
+function updateDisplay() {
+  pointsDisplay.textContent = points;
+  localStorage.setItem("points", points);
+  localStorage.setItem("autoClickers", autoClickers);
+  localStorage.setItem("doubleClick", JSON.stringify(doubleClick));
+}
 
-  doubleClickBtn.addEventListener("click", () => {
-    if (points >= 25 && !doubleClick) {
-      buySound.currentTime = 0;
-      buySound.play();
-      points -= 25;
-      doubleClick = true;
-      updateDisplay();
-    }
-  });
-
-  resetBtn.addEventListener("click", () => {
-    if (confirm("Are you sure you want to reset all progress?")) {
-      localStorage.clear();
-      points = 0;
-      autoClickers = 0;
-      doubleClick = false;
-      updateDisplay();
-    }
-  });
-
-  // Auto Clicker
-  setInterval(() => {
-    if (autoClickers > 0) {
-      points += autoClickers;
-      updateDisplay();
-    }
-  }, 1000);
-
-  // Random Golden Coin spawn
-  function spawnCoin() {
-    if (Math.random() < 0.25) { // 25% chance
-      const coin = document.createElement("div");
-      coin.classList.add("coin");
-      coin.style.top = Math.random() * (window.innerHeight - 100) + "px";
-      coin.style.left = Math.random() * (window.innerWidth - 100) + "px";
-
-      document.body.appendChild(coin);
-
-      coin.addEventListener("click", () => {
-        coinSound.currentTime = 0;
-        coinSound.play();
-        points *= 2;
-        updateDisplay();
-        coin.remove();
-      });
-
-      setTimeout(() => {
-        coin.remove();
-      }, 4000);
-    }
-  }
-
-  // Spawn a coin every 5 seconds
-  setInterval(spawnCoin, 5000);
-
-  // Load previous data
+// Click button
+clickButton.addEventListener("click", () => {
+  clickSound.currentTime = 0;
+  clickSound.play();
+  points += doubleClick ? 2 : 1;
+  createSparkle(clickButton);
   updateDisplay();
+});
+
+// Shop upgrades
+autoClickerBtn.addEventListener("click", () => {
+  if (points >= 50) {
+    buySound.currentTime = 0;
+    buySound.play();
+    points -= 50;
+    autoClickers += 1;
+    updateDisplay();
+  }
+});
+doubleClickBtn.addEventListener("click", () => {
+  if (points >= 25 && !doubleClick) {
+    buySound.currentTime = 0;
+    buySound.play();
+    points -= 25;
+    doubleClick = true;
+    updateDisplay();
+  }
+});
+
+// Reset progress
+resetBtn.addEventListener("click", () => {
+  if (confirm("Are you sure you want to reset all progress?")) {
+    localStorage.clear();
+    points = 0; autoClickers = 0; doubleClick = false;
+    updateDisplay();
+  }
+});
+
+// Music toggle
+musicBtn.addEventListener("click", () => {
+  if (musicPlaying) {
+    bgMusic.pause();
+    musicBtn.textContent = "Music Off";
+  } else {
+    bgMusic.play();
+    musicBtn.textContent = "Music On";
+  }
+  musicPlaying = !musicPlaying;
+});
+
+// Auto Clicker
+setInterval(() => {
+  if (autoClickers > 0) {
+    points += autoClickers;
+    updateDisplay();
+  }
+}, 1000);
+
+// Sparkle effect
+function createSparkle(element) {
+  const sparkle = document.createElement("div");
+  sparkle.className = "sparkle";
+  const rect = element.getBoundingClientRect();
+  sparkle.style.left = rect.left + rect.width/2 + "px";
+  sparkle.style.top = rect.top + "px";
+  document.body.appendChild(sparkle);
+  setTimeout(() => sparkle.remove(), 600);
+}
+
+// Random Golden Coin
+function spawnCoin() {
+  if (Math.random() < 0.25) {
+    const coin = document.createElement("div");
+    coin.classList.add("coin");
+    coin.style.top = Math.random() * (window.innerHeight - 100) + "px";
+    coin.style.left = Math.random() * (window.innerWidth - 100) + "px";
+
+    document.body.appendChild(coin);
+
+    coin.addEventListener("click", () => {
+      coinSound.currentTime = 0;
+      coinSound.play();
+      points *= 2;
+      updateDisplay();
+      createSparkle(coin);
+      coin.remove();
+    });
+
+    setTimeout(() => coin.remove(), 4000);
+  }
+}
+
+// Spawn coin every 5s
+setInterval(spawnCoin, 5000);
+
+// Initial display
+updateDisplay();
 </script>
 </body>
 </html>
-
