@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Clicker Game Deluxe</title>
+<title>Clicker Game</title>
 <style>
   body {
     font-family: Arial, sans-serif;
@@ -66,64 +66,60 @@
 
 <h1>🔥 Clicker Game 🔥</h1>
 <h2>Points: <span id="points">0</span></h2>
+<h3>Auto-clickers: <span id="autoClickers">0</span> | Click multipliers: <span id="clickMultipliers">0</span></h3>
 
 <button id="clickButton">Click Me!</button>
 
 <div class="store">
   <h3>Shop</h3>
   <button id="autoClickerBtn">Buy Auto Clicker (50 pts)</button>
-  <button id="doubleClickBtn">Buy Double Click (25 pts)</button>
+  <button id="doubleClickBtn">Buy Click Multiplier (25 pts)</button>
 </div>
 
 <button id="resetBtn" style="background:#444;">Reset Progress</button>
-<button id="musicBtn" style="background:#008080;">Music On</button>
 
 <!-- Sound Effects -->
 <audio id="clickSound" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
 <audio id="buySound" src="https://actions.google.com/sounds/v1/cartoon/cartoon_boing.ogg"></audio>
 <audio id="coinSound" src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg"></audio>
 
-<!-- Background Music -->
-<audio id="bgMusic" loop autoplay>
-  <source src="https://files.freemusicarchive.org/storage-freemusicarchive-org/music/ccCommunity/Komiku/Chiptune/Komiku_-_07_-_Adventure_Begins.mp3" type="audio/mpeg">
-</audio>
-
 <script>
 let points = parseInt(localStorage.getItem("points")) || 0;
 let autoClickers = parseInt(localStorage.getItem("autoClickers")) || 0;
-let doubleClick = JSON.parse(localStorage.getItem("doubleClick")) || false;
+let clickMultipliers = parseInt(localStorage.getItem("clickMultipliers")) || 0;
 
 const pointsDisplay = document.getElementById("points");
+const autoClickersDisplay = document.getElementById("autoClickers");
+const clickMultipliersDisplay = document.getElementById("clickMultipliers");
+
 const clickButton = document.getElementById("clickButton");
 const autoClickerBtn = document.getElementById("autoClickerBtn");
 const doubleClickBtn = document.getElementById("doubleClickBtn");
 const resetBtn = document.getElementById("resetBtn");
-const musicBtn = document.getElementById("musicBtn");
 
 const clickSound = document.getElementById("clickSound");
 const buySound = document.getElementById("buySound");
 const coinSound = document.getElementById("coinSound");
-const bgMusic = document.getElementById("bgMusic");
-
-let musicPlaying = true;
 
 function updateDisplay() {
   pointsDisplay.textContent = points;
+  autoClickersDisplay.textContent = autoClickers;
+  clickMultipliersDisplay.textContent = clickMultipliers;
   localStorage.setItem("points", points);
   localStorage.setItem("autoClickers", autoClickers);
-  localStorage.setItem("doubleClick", JSON.stringify(doubleClick));
+  localStorage.setItem("clickMultipliers", clickMultipliers);
 }
 
 // Click button
 clickButton.addEventListener("click", () => {
   clickSound.currentTime = 0;
   clickSound.play();
-  points += doubleClick ? 2 : 1;
+  points += 1 + clickMultipliers;
   createSparkle(clickButton);
   updateDisplay();
 });
 
-// Shop upgrades
+// Buy Auto Clicker
 autoClickerBtn.addEventListener("click", () => {
   if (points >= 50) {
     buySound.currentTime = 0;
@@ -133,12 +129,14 @@ autoClickerBtn.addEventListener("click", () => {
     updateDisplay();
   }
 });
+
+// Buy Click Multiplier
 doubleClickBtn.addEventListener("click", () => {
-  if (points >= 25 && !doubleClick) {
+  if (points >= 25) {
     buySound.currentTime = 0;
     buySound.play();
     points -= 25;
-    doubleClick = true;
+    clickMultipliers += 1;
     updateDisplay();
   }
 });
@@ -147,24 +145,12 @@ doubleClickBtn.addEventListener("click", () => {
 resetBtn.addEventListener("click", () => {
   if (confirm("Are you sure you want to reset all progress?")) {
     localStorage.clear();
-    points = 0; autoClickers = 0; doubleClick = false;
+    points = 0; autoClickers = 0; clickMultipliers = 0;
     updateDisplay();
   }
 });
 
-// Music toggle
-musicBtn.addEventListener("click", () => {
-  if (musicPlaying) {
-    bgMusic.pause();
-    musicBtn.textContent = "Music Off";
-  } else {
-    bgMusic.play();
-    musicBtn.textContent = "Music On";
-  }
-  musicPlaying = !musicPlaying;
-});
-
-// Auto Clicker
+// Auto Clicker interval
 setInterval(() => {
   if (autoClickers > 0) {
     points += autoClickers;
@@ -197,8 +183,8 @@ function spawnCoin() {
       coinSound.currentTime = 0;
       coinSound.play();
       points *= 2;
-      updateDisplay();
       createSparkle(coin);
+      updateDisplay();
       coin.remove();
     });
 
@@ -206,7 +192,7 @@ function spawnCoin() {
   }
 }
 
-// Spawn coin every 5s
+// Spawn coins every 5 seconds
 setInterval(spawnCoin, 5000);
 
 // Initial display
