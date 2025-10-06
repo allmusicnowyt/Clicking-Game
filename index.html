@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Click Game Deluxe</title>
+  <style>
+    body {
+      font-family: "Poppins", sans-serif;
+      background: linear-gradient(135deg, #141e30, #243b55);
+      color: #f1f1f1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      overflow: hidden;
+      margin: 0;
+    }
+
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 15px;
+      letter-spacing: 1px;
+    }
+
+    #clickButton {
+      font-size: 22px;
+      padding: 20px 40px;
+      border: none;
+      border-radius: 50%;
+      background: radial-gradient(circle at center, #00b4d8, #0077b6);
+      color: white;
+      cursor: pointer;
+      transition: transform 0.1s ease, box-shadow 0.2s ease;
+      box-shadow: 0 0 20px rgba(0, 180, 216, 0.6);
+    }
+
+    #clickButton:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 30px rgba(0, 180, 216, 0.9);
+    }
+
+    #clickButton:active {
+      transform: scale(0.95);
+    }
+
+    .stats {
+      margin-top: 25px;
+      font-size: 1.2rem;
+      text-align: center;
+    }
+
+    .shop {
+      margin-top: 25px;
+      padding: 20px;
+      border: 2px solid #00b4d8;
+      border-radius: 10px;
+      width: 300px;
+      text-align: center;
+      background: rgba(0, 0, 0, 0.3);
+    }
+
+    .shop h2 {
+      margin: 0 0 10px;
+      color: #00b4d8;
+    }
+
+    button.upgrade {
+      margin-top: 10px;
+      padding: 10px 20px;
+      background: linear-gradient(135deg, #0077b6, #0096c7);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s, transform 0.1s;
+    }
+
+    button.upgrade:hover {
+      background: linear-gradient(135deg, #0096c7, #00b4d8);
+      transform: scale(1.03);
+    }
+
+    button.upgrade:disabled {
+      background: gray;
+      cursor: not-allowed;
+    }
+
+    .floating {
+      position: absolute;
+      color: #00ffae;
+      font-weight: bold;
+      pointer-events: none;
+      animation: floatUp 1s ease-out forwards;
+    }
+
+    @keyframes floatUp {
+      from { opacity: 1; transform: translateY(0); }
+      to { opacity: 0; transform: translateY(-50px); }
+    }
+
+    .message {
+      position: fixed;
+      bottom: 30px;
+      background: #ef233c;
+      padding: 10px 20px;
+      border-radius: 8px;
+      color: white;
+      opacity: 0.9;
+      font-size: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>💎 Click Game Deluxe 💎</h1>
+  <button id="clickButton">Click Me!</button>
+
+  <div class="stats">
+    <p>Points: <span id="points">0</span></p>
+    <p>Points per click: <span id="perClick">1</span></p>
+    <p>Auto clickers: <span id="autoClickers">0</span></p>
+    <p>High Score (local): <span id="highScore">0</span></p>
+  </div>
+
+  <div class="shop">
+    <h2>🛒 Shop</h2>
+    <button class="upgrade" id="buyClickPower">+1 Per Click (Cost: 25)</button><br>
+    <button class="upgrade" id="buyAutoClicker">Auto Clicker (Cost: 50)</button>
+  </div>
+
+  <script>
+    let points = 0;
+    let perClick = 1;
+    let autoClickers = 0;
+    let highScore = parseInt(localStorage.getItem("highScore") || "0");
+    let clickPowerCost = 25;
+    let autoClickerCost = 50;
+
+    const pointsEl = document.getElementById("points");
+    const perClickEl = document.getElementById("perClick");
+    const autoClickersEl = document.getElementById("autoClickers");
+    const highScoreEl = document.getElementById("highScore");
+    const clickButton = document.getElementById("clickButton");
+    const buyClickPower = document.getElementById("buyClickPower");
+    const buyAutoClicker = document.getElementById("buyAutoClicker");
+
+    highScoreEl.textContent = highScore;
+
+    // Animate click and floating text
+    clickButton.addEventListener("click", (e) => {
+      points += perClick;
+      updateDisplay();
+
+      const float = document.createElement("div");
+      float.className = "floating";
+      float.textContent = `+${perClick}`;
+      float.style.left = e.pageX + "px";
+      float.style.top = e.pageY - 20 + "px";
+      document.body.appendChild(float);
+      setTimeout(() => float.remove(), 1000);
+    });
+
+    // Upgrade: per click
+    buyClickPower.addEventListener("click", () => {
+      if (points >= clickPowerCost) {
+        points -= clickPowerCost;
+        perClick++;
+        clickPowerCost = Math.round(clickPowerCost * 1.5); // increase cost
+        buyClickPower.textContent = `+1 Per Click (Cost: ${clickPowerCost})`;
+        updateDisplay();
+      } else {
+        showMessage("Not enough points!");
+      }
+    });
+
+    // Upgrade: auto clicker
+    buyAutoClicker.addEventListener("click", () => {
+      if (points >= autoClickerCost) {
+        points -= autoClickerCost;
+        autoClickers++;
+        autoClickerCost = Math.round(autoClickerCost * 1.7); // increase cost
+        buyAutoClicker.textContent = `Auto Clicker (Cost: ${autoClickerCost})`;
+        updateDisplay();
+      } else {
+        showMessage("Not enough points!");
+      }
+    });
+
+    // Auto clickers tick
+    setInterval(() => {
+      if (autoClickers > 0) {
+        points += autoClickers;
+        updateDisplay();
+      }
+    }, 1000);
+
+    function updateDisplay() {
+      pointsEl.textContent = points;
+      perClickEl.textContent = perClick;
+      autoClickersEl.textContent = autoClickers;
+
+      if (points > highScore) {
+        highScore = points;
+        localStorage.setItem("highScore", highScore);
+        highScoreEl.textContent = highScore;
+      }
+    }
+
+    function showMessage(text) {
+      const msg = document.createElement("div");
+      msg.className = "message";
+      msg.textContent = text;
+      document.body.appendChild(msg);
+      setTimeout(() => msg.remove(), 2000);
+    }
+  </script>
+</body>
+</html>
