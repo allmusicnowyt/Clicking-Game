@@ -12,10 +12,7 @@
     color: white;
     overflow: hidden;
   }
-  h1 {
-    font-size: 2em;
-    margin-top: 20px;
-  }
+  h1 { font-size: 2em; margin-top: 20px; }
   button {
     background: #ff4747;
     border: none;
@@ -27,13 +24,8 @@
     cursor: pointer;
     transition: 0.2s;
   }
-  button:hover {
-    background: #ff3030;
-    transform: scale(1.05);
-  }
-  .store {
-    margin-top: 30px;
-  }
+  button:hover { background: #ff3030; transform: scale(1.05); }
+  .store { margin-top: 30px; }
   .coin {
     position: absolute;
     width: 60px;
@@ -91,7 +83,6 @@ let clickMultipliers = parseInt(localStorage.getItem("clickMultipliers")) || 0;
 const pointsDisplay = document.getElementById("points");
 const autoClickersDisplay = document.getElementById("autoClickers");
 const clickMultipliersDisplay = document.getElementById("clickMultipliers");
-
 const clickButton = document.getElementById("clickButton");
 const autoClickerBtn = document.getElementById("autoClickerBtn");
 const doubleClickBtn = document.getElementById("doubleClickBtn");
@@ -101,10 +92,17 @@ const clickSound = document.getElementById("clickSound");
 const buySound = document.getElementById("buySound");
 const coinSound = document.getElementById("coinSound");
 
+function formatShort(num) {
+  if (num >= 1e9) return (num / 1e9).toFixed(1) + "B";
+  if (num >= 1e6) return (num / 1e6).toFixed(1) + "M";
+  if (num >= 1e3) return (num / 1e3).toFixed(1) + "K";
+  return num;
+}
+
 function updateDisplay() {
-  pointsDisplay.textContent = points;
-  autoClickersDisplay.textContent = autoClickers;
-  clickMultipliersDisplay.textContent = clickMultipliers;
+  pointsDisplay.textContent = formatShort(points);
+  autoClickersDisplay.textContent = formatShort(autoClickers);
+  clickMultipliersDisplay.textContent = formatShort(clickMultipliers);
   localStorage.setItem("points", points);
   localStorage.setItem("autoClickers", autoClickers);
   localStorage.setItem("clickMultipliers", clickMultipliers);
@@ -176,15 +174,41 @@ function spawnCoin() {
     coin.classList.add("coin");
     coin.style.top = Math.random() * (window.innerHeight - 100) + "px";
     coin.style.left = Math.random() * (window.innerWidth - 100) + "px";
-
     document.body.appendChild(coin);
 
     coin.addEventListener("click", () => {
       coinSound.currentTime = 0;
       coinSound.play();
       points *= 2;
-      createSparkle(coin);
       updateDisplay();
+
+      // Floating short-form points
+      const floatText = document.createElement("div");
+      floatText.textContent = "+" + formatShort(points);
+      floatText.style.position = "absolute";
+      floatText.style.left = coin.style.left;
+      floatText.style.top = coin.style.top;
+      floatText.style.color = "gold";
+      floatText.style.fontWeight = "bold";
+      floatText.style.fontSize = "20px";
+      floatText.style.pointerEvents = "none";
+      floatText.style.opacity = "1";
+      document.body.appendChild(floatText);
+
+      let top = parseInt(coin.style.top);
+      let opacity = 1;
+      const anim = setInterval(() => {
+        top -= 1;
+        opacity -= 0.02;
+        floatText.style.top = top + "px";
+        floatText.style.opacity = opacity;
+        if (opacity <= 0) {
+          clearInterval(anim);
+          floatText.remove();
+        }
+      }, 16);
+
+      createSparkle(coin);
       coin.remove();
     });
 
