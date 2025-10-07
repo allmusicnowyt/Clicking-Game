@@ -57,11 +57,19 @@
     50% { transform: rotate(720deg) scale(1.5); opacity: 1; }
     100% { transform: rotate(1080deg) scale(0); opacity: 0; }
   }
+  #leaderboard {
+    text-align: left;
+    display: inline-block;
+    margin-top: 20px;
+    background: #333;
+    padding: 10px;
+    border-radius: 10px;
+  }
 </style>
 </head>
 <body>
 
-<h1> Clicker Game </h1>
+<h1>🔥 Clicker Game 🔥</h1>
 <h2>Points: <span id="points">0</span></h2>
 <h3>Auto-clickers: <span id="autoClickers">0</span> | Click multipliers: <span id="clickMultipliers">0</span></h3>
 
@@ -73,7 +81,11 @@
   <button id="doubleClickBtn">Buy Click Multiplier (25 pts)</button>
 </div>
 
+<button id="submitScoreBtn">Submit Score</button>
 <button id="resetBtn" style="background:#444;">Reset Progress</button>
+
+<h3>Global Leaderboard</h3>
+<div id="leaderboard"></div>
 
 <audio id="clickSound" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
 <audio id="buySound" src="https://actions.google.com/sounds/v1/cartoon/cartoon_boing.ogg"></audio>
@@ -91,24 +103,28 @@ const clickButton = document.getElementById("clickButton");
 const autoClickerBtn = document.getElementById("autoClickerBtn");
 const doubleClickBtn = document.getElementById("doubleClickBtn");
 const resetBtn = document.getElementById("resetBtn");
+const submitScoreBtn = document.getElementById("submitScoreBtn");
+const leaderboardDiv = document.getElementById("leaderboard");
 
 const clickSound = document.getElementById("clickSound");
 const buySound = document.getElementById("buySound");
 const coinSound = document.getElementById("coinSound");
 
+// --- SHORT FORM ---
 function formatShort(num) {
   if (num >= 1e6) {
-    if (num >= 1e24) return (num / 1e24).toFixed(1) + "Y";
-    if (num >= 1e21) return (num / 1e21).toFixed(1) + "Z";
-    if (num >= 1e18) return (num / 1e18).toFixed(1) + "E";
-    if (num >= 1e15) return (num / 1e15).toFixed(1) + "P";
-    if (num >= 1e12) return (num / 1e12).toFixed(1) + "T";
-    if (num >= 1e9) return (num / 1e9).toFixed(1) + "B";
-    return (num / 1e6).toFixed(1) + "M";
+    if (num >= 1e24) return (num/1e24).toFixed(1)+"Y";
+    if (num >= 1e21) return (num/1e21).toFixed(1)+"Z";
+    if (num >= 1e18) return (num/1e18).toFixed(1)+"E";
+    if (num >= 1e15) return (num/1e15).toFixed(1)+"P";
+    if (num >= 1e12) return (num/1e12).toFixed(1)+"T";
+    if (num >= 1e9) return (num/1e9).toFixed(1)+"B";
+    return (num/1e6).toFixed(1)+"M";
   }
   return num.toString();
 }
 
+// --- DISPLAY UPDATE ---
 function updateDisplay() {
   pointsDisplay.textContent = formatShort(points);
   autoClickersDisplay.textContent = formatShort(autoClickers);
@@ -119,45 +135,36 @@ function updateDisplay() {
   localStorage.setItem("clickMultipliers", clickMultipliers);
 }
 
-// Click button
-clickButton.addEventListener("click", () => {
-  clickSound.currentTime = 0;
-  clickSound.play();
+// --- CLICK ---
+clickButton.addEventListener("click",()=>{
+  clickSound.currentTime=0; clickSound.play();
   points += 1 + clickMultipliers;
   createSparkle(clickButton);
   updateDisplay();
 });
 
-// Shop
-autoClickerBtn.addEventListener("click", () => {
-  if (points >= 50) { buySound.play(); points -= 50; autoClickers += 1; updateDisplay(); }
-});
-doubleClickBtn.addEventListener("click", () => {
-  if (points >= 25) { buySound.play(); points -= 25; clickMultipliers += 1; updateDisplay(); }
-});
+// --- SHOP ---
+autoClickerBtn.addEventListener("click",()=>{ if(points>=50){ buySound.play(); points-=50; autoClickers+=1; updateDisplay(); }});
+doubleClickBtn.addEventListener("click",()=>{ if(points>=25){ buySound.play(); points-=25; clickMultipliers+=1; updateDisplay(); }});
 
-// Reset
-resetBtn.addEventListener("click", () => {
-  if (confirm("Reset all progress?")) {
-    localStorage.clear(); points=0; autoClickers=0; clickMultipliers=0; updateDisplay();
-  }
-});
+// --- RESET ---
+resetBtn.addEventListener("click",()=>{ if(confirm("Reset all progress?")){ localStorage.clear(); points=0; autoClickers=0; clickMultipliers=0; updateDisplay(); }});
 
-// Auto Clicker
-setInterval(() => { if(autoClickers>0){ points+=autoClickers; updateDisplay(); } },1000);
+// --- AUTO CLICKER ---
+setInterval(()=>{ if(autoClickers>0){ points+=autoClickers; updateDisplay(); } },1000);
 
-// Sparkle effect
+// --- SPARKLE ---
 function createSparkle(element){
-  const sparkle = document.createElement("div");
+  const sparkle=document.createElement("div");
   sparkle.className="sparkle";
-  const rect = element.getBoundingClientRect();
-  sparkle.style.left = rect.left + rect.width/2 + "px";
-  sparkle.style.top = rect.top + "px";
+  const rect=element.getBoundingClientRect();
+  sparkle.style.left=rect.left+rect.width/2+"px";
+  sparkle.style.top=rect.top+"px";
   document.body.appendChild(sparkle);
   setTimeout(()=>sparkle.remove(),600);
 }
 
-// Random golden coin
+// --- RANDOM GOLDEN COIN ---
 function spawnCoin(){
   if(Math.random()<0.25){
     const coin=document.createElement("div");
@@ -168,13 +175,9 @@ function spawnCoin(){
 
     coin.addEventListener("click",()=>{
       coinSound.currentTime=0; coinSound.play();
-      points*=2;
-      updateDisplay();
-
-      // Spin animation
+      points*=2; updateDisplay();
       coin.classList.add("coin-spin");
 
-      // Floating points
       const floatText=document.createElement("div");
       floatText.textContent="+"+formatShort(points);
       floatText.style.position="absolute";
@@ -190,10 +193,8 @@ function spawnCoin(){
       let top=parseInt(coin.style.top);
       let opacity=1;
       const anim=setInterval(()=>{
-        top-=1;
-        opacity-=0.02;
-        floatText.style.top=top+"px";
-        floatText.style.opacity=opacity;
+        top-=1; opacity-=0.02;
+        floatText.style.top=top+"px"; floatText.style.opacity=opacity;
         if(opacity<=0){ clearInterval(anim); floatText.remove(); }
       },16);
 
@@ -203,10 +204,44 @@ function spawnCoin(){
     setTimeout(()=>coin.remove(),4000);
   }
 }
-
 setInterval(spawnCoin,5000);
+
+// --- SUBMIT SCORE TO DREAMLO ---
+submitScoreBtn.addEventListener("click",()=>{
+  const playerName = prompt("Enter your name for leaderboard:", "Player");
+  if(!playerName) return;
+
+  const url = `http://dreamlo.com/lb/nQQcDbaRI0WCy5ReWthglQRb8dK3HlokiYy3WNiufC3w/add/${encodeURIComponent(playerName)}/${points}`;
+  fetch(url)
+    .then(()=>alert("Score submitted successfully!"))
+    .catch(()=>alert("Failed to submit score."));
+});
+
+// --- LIVE GLOBAL LEADERBOARD ---
+function updateLeaderboard(){
+  const publicUrl = "http://dreamlo.com/lb/nQQcDbaRI0WCy5ReWthglQRb8dK3HlokiYy3WNiufC3w/pipe/";
+  fetch(publicUrl)
+    .then(res=>res.text())
+    .then(data=>{
+      leaderboardDiv.innerHTML="";
+      const lines = data.split("\n");
+      lines.forEach((line,index)=>{
+        if(line.trim()==="") return;
+        const parts = line.split("|");
+        const name = parts[0];
+        const score = parts[1];
+        const entry = document.createElement("div");
+        entry.textContent = `${index+1}. ${name} - ${score}`;
+        leaderboardDiv.appendChild(entry);
+      });
+    })
+    .catch(err=>console.error(err));
+}
+setInterval(updateLeaderboard,5000);
+updateLeaderboard(); // initial load
+
+// --- INITIAL DISPLAY ---
 updateDisplay();
 </script>
 </body>
 </html>
-
