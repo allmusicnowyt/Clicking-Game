@@ -223,7 +223,7 @@ submitScoreBtn.addEventListener("click", ()=>{
   const privateKey = "nQQcDbaRI0WCy5ReWthglQRb8dK3HlokiYy3WNiufC3w";
   const url = `http://dreamlo.com/lb/${privateKey}/add/${encodeURIComponent(playerName)}/${points}`;
 
-  fetch(url)
+  fetch(privateKey)
     .then(() => alert("Score submitted successfully!"))
     .catch(() => alert("Failed to submit score."));
 });
@@ -256,3 +256,4 @@ updateDisplay();
 </script>
 </body>
 </html>
+
