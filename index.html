@@ -11,6 +11,7 @@
     color: white;
     overflow: hidden;
     display: flex;
+    margin:0;
   }
   #gameArea {
     flex: 1;
@@ -73,6 +74,7 @@
 </style>
 </head>
 <body>
+
 <div id="gameArea">
   <h1>🔥 Clicker Game 🔥</h1>
   <h2>Points: <span id="points">0</span></h2>
@@ -86,7 +88,6 @@
     <button id="doubleClickBtn">Buy Click Multiplier (25 pts)</button>
   </div>
 
-  <button id="submitScoreBtn">Submit Score</button>
   <button id="resetBtn" style="background:#444;">Reset Progress</button>
 </div>
 
@@ -103,6 +104,11 @@
 let points = parseInt(localStorage.getItem("points")) || 0;
 let autoClickers = parseInt(localStorage.getItem("autoClickers")) || 0;
 let clickMultipliers = parseInt(localStorage.getItem("clickMultipliers")) || 0;
+let playerName = localStorage.getItem("playerName");
+if(!playerName){
+  playerName = prompt("Enter your name:", "Player") || "Player";
+  localStorage.setItem("playerName", playerName);
+}
 
 const pointsDisplay = document.getElementById("points");
 const autoClickersDisplay = document.getElementById("autoClickers");
@@ -111,15 +117,14 @@ const clickButton = document.getElementById("clickButton");
 const autoClickerBtn = document.getElementById("autoClickerBtn");
 const doubleClickBtn = document.getElementById("doubleClickBtn");
 const resetBtn = document.getElementById("resetBtn");
-const submitScoreBtn = document.getElementById("submitScoreBtn");
 const leaderboardEntries = document.getElementById("leaderboardEntries");
 
 const clickSound = document.getElementById("clickSound");
 const buySound = document.getElementById("buySound");
 const coinSound = document.getElementById("coinSound");
 
-// --- SHORT FORM ---
-function formatShort(num) {
+// SHORT FORM
+function formatShort(num){
   if(num>=1e6){
     if(num>=1e24) return (num/1e24).toFixed(1)+"Y";
     if(num>=1e21) return (num/1e21).toFixed(1)+"Z";
@@ -132,47 +137,58 @@ function formatShort(num) {
   return num.toString();
 }
 
-// --- DISPLAY UPDATE ---
+// DISPLAY UPDATE
 function updateDisplay(){
   pointsDisplay.textContent = formatShort(points);
   autoClickersDisplay.textContent = formatShort(autoClickers);
   clickMultipliersDisplay.textContent = formatShort(clickMultipliers);
-
   localStorage.setItem("points", points);
   localStorage.setItem("autoClickers", autoClickers);
   localStorage.setItem("clickMultipliers", clickMultipliers);
 }
 
-// Click
-clickButton.addEventListener("click",()=>{
+// CLICK
+clickButton.addEventListener("click", ()=>{
   clickSound.currentTime=0; clickSound.play();
   points += 1 + clickMultipliers;
   createSparkle(clickButton);
   updateDisplay();
 });
 
-// Shop
-autoClickerBtn.addEventListener("click",()=>{ if(points>=50){ buySound.play(); points-=50; autoClickers+=1; updateDisplay(); }});
-doubleClickBtn.addEventListener("click",()=>{ if(points>=25){ buySound.play(); points-=25; clickMultipliers+=1; updateDisplay(); }});
+// SHOP
+autoClickerBtn.addEventListener("click", ()=>{
+  if(points>=50){ buySound.play(); points-=50; autoClickers+=1; updateDisplay(); }
+});
+doubleClickBtn.addEventListener("click", ()=>{
+  if(points>=25){ buySound.play(); points-=25; clickMultipliers+=1; updateDisplay(); }
+});
 
-// Reset
-resetBtn.addEventListener("click",()=>{ if(confirm("Reset all progress?")){ localStorage.clear(); points=0; autoClickers=0; clickMultipliers=0; updateDisplay(); }});
+// RESET
+resetBtn.addEventListener("click", ()=>{
+  if(confirm("Reset all progress?")){
+    localStorage.clear();
+    points=0; autoClickers=0; clickMultipliers=0;
+    playerName = prompt("Enter your name:", "Player") || "Player";
+    localStorage.setItem("playerName", playerName);
+    updateDisplay();
+  }
+});
 
-// Auto Clicker
+// AUTO CLICKER
 setInterval(()=>{ if(autoClickers>0){ points+=autoClickers; updateDisplay(); } },1000);
 
-// Sparkle effect
+// SPARKLE EFFECT
 function createSparkle(element){
-  const sparkle=document.createElement("div");
+  const sparkle = document.createElement("div");
   sparkle.className="sparkle";
-  const rect=element.getBoundingClientRect();
-  sparkle.style.left=rect.left+rect.width/2+"px";
-  sparkle.style.top=rect.top+"px";
+  const rect = element.getBoundingClientRect();
+  sparkle.style.left = rect.left + rect.width/2 + "px";
+  sparkle.style.top = rect.top + "px";
   document.body.appendChild(sparkle);
   setTimeout(()=>sparkle.remove(),600);
 }
 
-// Random golden coin
+// RANDOM GOLD COIN
 function spawnCoin(){
   if(Math.random()<0.25){
     const coin=document.createElement("div");
@@ -202,7 +218,8 @@ function spawnCoin(){
       let opacity=1;
       const anim=setInterval(()=>{
         top-=1; opacity-=0.02;
-        floatText.style.top=top+"px"; floatText.style.opacity=opacity;
+        floatText.style.top=top+"px";
+        floatText.style.opacity=opacity;
         if(opacity<=0){ clearInterval(anim); floatText.remove(); }
       },16);
 
@@ -214,46 +231,33 @@ function spawnCoin(){
 }
 setInterval(spawnCoin,5000);
 
-// Submit Score to Dreamlo
-submitScoreBtn.addEventListener("click", ()=>{
-  const playerName = prompt("Enter your name:", "Player");
-  if(!playerName) return;
-
-  // PRIVATE KEY
-  const privateKey = "nQQcDbaRI0WCy5ReWthglQRb8dK3HlokiYy3WNiufC3w";
-  const url = `http://dreamlo.com/lb/${privateKey}/add/${encodeURIComponent(playerName)}/${points}`;
-
-  fetch(privateKey)
-    .then(() => alert("Score submitted successfully!"))
-    .catch(() => alert("Failed to submit score."));
-});
-
-// Live Leaderboard
+// LIVE LEADERBOARD
 function updateLeaderboard(){
-  const publicUrl = "http://dreamlo.com/lb/nQQcDbaRI0WCy5ReWthglQRb8dK3HlokiYy3WNiufC3w/pipe/";
+  const publicUrl="http://dreamlo.com/lb/nQQcDbaRI0WCy5ReWthglQRb8dK3HlokiYy3WNiufC3w/pipe/";
   fetch(publicUrl)
-    .then(res => res.text())
-    .then(data => {
-      leaderboardEntries.innerHTML = "";
+    .then(res=>res.text())
+    .then(data=>{
+      leaderboardEntries.innerHTML="";
       const lines = data.split("\n");
       lines.forEach((line,index)=>{
         if(line.trim()==="") return;
         const parts = line.split("|");
-        const name = parts[0];
-        const score = parts[1];
+        let name = parts[0];
+        const score = parseInt(parts[1]);
+
+        if(name===playerName) name += " (You)";
+
         const entry = document.createElement("div");
-        entry.textContent = `${index+1}. ${name} - ${formatShort(parseInt(score))}`;
+        entry.textContent = `${index+1}. ${name} - ${formatShort(score)}`;
         leaderboardEntries.appendChild(entry);
       });
-    })
-    .catch(err=>console.error(err));
+    }).catch(err=>console.error(err));
 }
 setInterval(updateLeaderboard,5000);
 updateLeaderboard();
 
-// Initial Display
+// INITIAL DISPLAY
 updateDisplay();
 </script>
 </body>
 </html>
-
