@@ -7,25 +7,38 @@
 <style>
   body {
     font-family: Arial, sans-serif;
-    text-align: center;
     background: linear-gradient(to right, #222, #555);
     color: white;
     overflow: hidden;
+    display: flex;
+  }
+  #gameArea {
+    flex: 1;
+    text-align: center;
+    padding: 20px;
+  }
+  #leaderboard {
+    width: 250px;
+    background: #333;
+    padding: 10px;
+    border-left: 3px solid gold;
+    overflow-y: auto;
+    max-height: 100vh;
   }
   h1 { font-size: 2em; margin-top: 20px; }
   button {
     background: #ff4747;
     border: none;
     color: white;
-    padding: 15px 30px;
-    margin: 10px;
+    padding: 12px 25px;
+    margin: 5px;
     border-radius: 10px;
-    font-size: 1.2em;
+    font-size: 1em;
     cursor: pointer;
     transition: 0.2s;
   }
   button:hover { background: #ff3030; transform: scale(1.05); }
-  .store { margin-top: 30px; }
+  .store { margin-top: 20px; }
   .coin {
     position: absolute;
     width: 60px;
@@ -57,35 +70,30 @@
     50% { transform: rotate(720deg) scale(1.5); opacity: 1; }
     100% { transform: rotate(1080deg) scale(0); opacity: 0; }
   }
-  #leaderboard {
-    text-align: left;
-    display: inline-block;
-    margin-top: 20px;
-    background: #333;
-    padding: 10px;
-    border-radius: 10px;
-  }
 </style>
 </head>
 <body>
+<div id="gameArea">
+  <h1>🔥 Clicker Game 🔥</h1>
+  <h2>Points: <span id="points">0</span></h2>
+  <h3>Auto-clickers: <span id="autoClickers">0</span> | Click multipliers: <span id="clickMultipliers">0</span></h3>
 
-<h1>🔥 Clicker Game 🔥</h1>
-<h2>Points: <span id="points">0</span></h2>
-<h3>Auto-clickers: <span id="autoClickers">0</span> | Click multipliers: <span id="clickMultipliers">0</span></h3>
+  <button id="clickButton">Click Me!</button>
 
-<button id="clickButton">Click Me!</button>
+  <div class="store">
+    <h3>Shop</h3>
+    <button id="autoClickerBtn">Buy Auto Clicker (50 pts)</button>
+    <button id="doubleClickBtn">Buy Click Multiplier (25 pts)</button>
+  </div>
 
-<div class="store">
-  <h3>Shop</h3>
-  <button id="autoClickerBtn">Buy Auto Clicker (50 pts)</button>
-  <button id="doubleClickBtn">Buy Click Multiplier (25 pts)</button>
+  <button id="submitScoreBtn">Submit Score</button>
+  <button id="resetBtn" style="background:#444;">Reset Progress</button>
 </div>
 
-<button id="submitScoreBtn">Submit Score</button>
-<button id="resetBtn" style="background:#444;">Reset Progress</button>
-
-<h3>Global Leaderboard</h3>
-<div id="leaderboard"></div>
+<div id="leaderboard">
+  <h3>Global Leaderboard</h3>
+  <div id="leaderboardEntries"></div>
+</div>
 
 <audio id="clickSound" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
 <audio id="buySound" src="https://actions.google.com/sounds/v1/cartoon/cartoon_boing.ogg"></audio>
@@ -104,7 +112,7 @@ const autoClickerBtn = document.getElementById("autoClickerBtn");
 const doubleClickBtn = document.getElementById("doubleClickBtn");
 const resetBtn = document.getElementById("resetBtn");
 const submitScoreBtn = document.getElementById("submitScoreBtn");
-const leaderboardDiv = document.getElementById("leaderboard");
+const leaderboardEntries = document.getElementById("leaderboardEntries");
 
 const clickSound = document.getElementById("clickSound");
 const buySound = document.getElementById("buySound");
@@ -112,20 +120,19 @@ const coinSound = document.getElementById("coinSound");
 
 // --- SHORT FORM ---
 function formatShort(num) {
-  if (num >= 1e6) {
-    if (num >= 1e24) return (num/1e24).toFixed(1)+"Y";
-    if (num >= 1e21) return (num/1e21).toFixed(1)+"Z";
-    if (num >= 1e18) return (num/1e18).toFixed(1)+"E";
-    if (num >= 1e15) return (num/1e15).toFixed(1)+"P";
-    if (num >= 1e12) return (num/1e12).toFixed(1)+"T";
-    if (num >= 1e9) return (num/1e9).toFixed(1)+"B";
+  if(num>=1e6){
+    if(num>=1e24) return (num/1e24).toFixed(1)+"Y";
+    if(num>=1e21) return (num/1e21).toFixed(1)+"Z";
+    if(num>=1e18) return (num/1e18).toFixed(1)+"E";
+    if(num>=1e15) return (num/1e15).toFixed(1)+"P";
+    if(num>=1e12) return (num/1e12).toFixed(1)+"T";
+    if(num>=1e9) return (num/1e9).toFixed(1)+"B";
     return (num/1e6).toFixed(1)+"M";
   }
   return num.toString();
 }
 
-// --- DISPLAY UPDATE ---
-function updateDisplay() {
+function updateDisplay(){
   pointsDisplay.textContent = formatShort(points);
   autoClickersDisplay.textContent = formatShort(autoClickers);
   clickMultipliersDisplay.textContent = formatShort(clickMultipliers);
@@ -135,7 +142,7 @@ function updateDisplay() {
   localStorage.setItem("clickMultipliers", clickMultipliers);
 }
 
-// --- CLICK ---
+// Click button
 clickButton.addEventListener("click",()=>{
   clickSound.currentTime=0; clickSound.play();
   points += 1 + clickMultipliers;
@@ -143,17 +150,17 @@ clickButton.addEventListener("click",()=>{
   updateDisplay();
 });
 
-// --- SHOP ---
+// Shop
 autoClickerBtn.addEventListener("click",()=>{ if(points>=50){ buySound.play(); points-=50; autoClickers+=1; updateDisplay(); }});
 doubleClickBtn.addEventListener("click",()=>{ if(points>=25){ buySound.play(); points-=25; clickMultipliers+=1; updateDisplay(); }});
 
-// --- RESET ---
+// Reset
 resetBtn.addEventListener("click",()=>{ if(confirm("Reset all progress?")){ localStorage.clear(); points=0; autoClickers=0; clickMultipliers=0; updateDisplay(); }});
 
-// --- AUTO CLICKER ---
+// Auto Clicker
 setInterval(()=>{ if(autoClickers>0){ points+=autoClickers; updateDisplay(); } },1000);
 
-// --- SPARKLE ---
+// Sparkle effect
 function createSparkle(element){
   const sparkle=document.createElement("div");
   sparkle.className="sparkle";
@@ -164,7 +171,7 @@ function createSparkle(element){
   setTimeout(()=>sparkle.remove(),600);
 }
 
-// --- RANDOM GOLDEN COIN ---
+// Random golden coin
 function spawnCoin(){
   if(Math.random()<0.25){
     const coin=document.createElement("div");
@@ -206,41 +213,35 @@ function spawnCoin(){
 }
 setInterval(spawnCoin,5000);
 
-// --- SUBMIT SCORE TO DREAMLO ---
+// Submit Score to Dreamlo
 submitScoreBtn.addEventListener("click",()=>{
-  const playerName = prompt("Enter your name for leaderboard:", "Player");
+  const playerName = prompt("Enter your name:", "Player");
   if(!playerName) return;
-
   const url = `http://dreamlo.com/lb/nQQcDbaRI0WCy5ReWthglQRb8dK3HlokiYy3WNiufC3w/add/${encodeURIComponent(playerName)}/${points}`;
-  fetch(url)
-    .then(()=>alert("Score submitted successfully!"))
-    .catch(()=>alert("Failed to submit score."));
+  fetch(url).then(()=>alert("Score submitted!")).catch(()=>alert("Failed to submit."));
 });
 
-// --- LIVE GLOBAL LEADERBOARD ---
+// Live Leaderboard
 function updateLeaderboard(){
-  const publicUrl = "http://dreamlo.com/lb/nQQcDbaRI0WCy5ReWthglQRb8dK3HlokiYy3WNiufC3w/pipe/";
-  fetch(publicUrl)
-    .then(res=>res.text())
-    .then(data=>{
-      leaderboardDiv.innerHTML="";
-      const lines = data.split("\n");
-      lines.forEach((line,index)=>{
-        if(line.trim()==="") return;
-        const parts = line.split("|");
-        const name = parts[0];
-        const score = parts[1];
-        const entry = document.createElement("div");
-        entry.textContent = `${index+1}. ${name} - ${score}`;
-        leaderboardDiv.appendChild(entry);
-      });
-    })
-    .catch(err=>console.error(err));
+  const publicUrl="http://dreamlo.com/lb/nQQcDbaRI0WCy5ReWthglQRb8dK3HlokiYy3WNiufC3w/pipe/";
+  fetch(publicUrl).then(res=>res.text()).then(data=>{
+    leaderboardEntries.innerHTML="";
+    const lines=data.split("\n");
+    lines.forEach((line,index)=>{
+      if(line.trim()==="") return;
+      const parts=line.split("|");
+      const name=parts[0];
+      const score=parts[1];
+      const entry=document.createElement("div");
+      entry.textContent=`${index+1}. ${name} - ${formatShort(parseInt(score))}`;
+      leaderboardEntries.appendChild(entry);
+    });
+  }).catch(err=>console.error(err));
 }
 setInterval(updateLeaderboard,5000);
-updateLeaderboard(); // initial load
+updateLeaderboard();
 
-// --- INITIAL DISPLAY ---
+// Initial Display
 updateDisplay();
 </script>
 </body>
