@@ -34,10 +34,7 @@
     border-radius: 50%;
     box-shadow: 0 0 15px gold;
     cursor: pointer;
-    animation: bounce 1s infinite alternate, fadein 0.5s;
   }
-  @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-15px); } }
-  @keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
   .sparkle {
     position: absolute;
     width: 10px;
@@ -51,6 +48,14 @@
   @keyframes sparkleAnim {
     0% { transform: scale(1) translateY(0); opacity: 1; }
     100% { transform: scale(0) translateY(-50px); opacity: 0; }
+  }
+  .coin-spin {
+    animation: spinHit 0.8s forwards;
+  }
+  @keyframes spinHit {
+    0% { transform: rotate(0deg) scale(1); opacity: 1; }
+    50% { transform: rotate(720deg) scale(1.5); opacity: 1; }
+    100% { transform: rotate(1080deg) scale(0); opacity: 0; }
   }
 </style>
 </head>
@@ -70,7 +75,6 @@
 
 <button id="resetBtn" style="background:#444;">Reset Progress</button>
 
-<!-- Sound Effects -->
 <audio id="clickSound" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
 <audio id="buySound" src="https://actions.google.com/sounds/v1/cartoon/cartoon_boing.ogg"></audio>
 <audio id="coinSound" src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg"></audio>
@@ -93,16 +97,23 @@ const buySound = document.getElementById("buySound");
 const coinSound = document.getElementById("coinSound");
 
 function formatShort(num) {
-  if (num >= 1e9) return (num / 1e9).toFixed(1) + "B";
-  if (num >= 1e6) return (num / 1e6).toFixed(1) + "M";
-  if (num >= 1e3) return (num / 1e3).toFixed(1) + "K";
-  return num;
+  if (num >= 1e6) {
+    if (num >= 1e24) return (num / 1e24).toFixed(1) + "Y";
+    if (num >= 1e21) return (num / 1e21).toFixed(1) + "Z";
+    if (num >= 1e18) return (num / 1e18).toFixed(1) + "E";
+    if (num >= 1e15) return (num / 1e15).toFixed(1) + "P";
+    if (num >= 1e12) return (num / 1e12).toFixed(1) + "T";
+    if (num >= 1e9) return (num / 1e9).toFixed(1) + "B";
+    return (num / 1e6).toFixed(1) + "M";
+  }
+  return num.toString();
 }
 
 function updateDisplay() {
   pointsDisplay.textContent = formatShort(points);
   autoClickersDisplay.textContent = formatShort(autoClickers);
   clickMultipliersDisplay.textContent = formatShort(clickMultipliers);
+
   localStorage.setItem("points", points);
   localStorage.setItem("autoClickers", autoClickers);
   localStorage.setItem("clickMultipliers", clickMultipliers);
@@ -117,109 +128,83 @@ clickButton.addEventListener("click", () => {
   updateDisplay();
 });
 
-// Buy Auto Clicker
+// Shop
 autoClickerBtn.addEventListener("click", () => {
-  if (points >= 50) {
-    buySound.currentTime = 0;
-    buySound.play();
-    points -= 50;
-    autoClickers += 1;
-    updateDisplay();
-  }
+  if (points >= 50) { buySound.play(); points -= 50; autoClickers += 1; updateDisplay(); }
 });
-
-// Buy Click Multiplier
 doubleClickBtn.addEventListener("click", () => {
-  if (points >= 25) {
-    buySound.currentTime = 0;
-    buySound.play();
-    points -= 25;
-    clickMultipliers += 1;
-    updateDisplay();
-  }
+  if (points >= 25) { buySound.play(); points -= 25; clickMultipliers += 1; updateDisplay(); }
 });
 
-// Reset progress
+// Reset
 resetBtn.addEventListener("click", () => {
-  if (confirm("Are you sure you want to reset all progress?")) {
-    localStorage.clear();
-    points = 0; autoClickers = 0; clickMultipliers = 0;
-    updateDisplay();
+  if (confirm("Reset all progress?")) {
+    localStorage.clear(); points=0; autoClickers=0; clickMultipliers=0; updateDisplay();
   }
 });
 
-// Auto Clicker interval
-setInterval(() => {
-  if (autoClickers > 0) {
-    points += autoClickers;
-    updateDisplay();
-  }
-}, 1000);
+// Auto Clicker
+setInterval(() => { if(autoClickers>0){ points+=autoClickers; updateDisplay(); } },1000);
 
 // Sparkle effect
-function createSparkle(element) {
+function createSparkle(element){
   const sparkle = document.createElement("div");
-  sparkle.className = "sparkle";
+  sparkle.className="sparkle";
   const rect = element.getBoundingClientRect();
   sparkle.style.left = rect.left + rect.width/2 + "px";
   sparkle.style.top = rect.top + "px";
   document.body.appendChild(sparkle);
-  setTimeout(() => sparkle.remove(), 600);
+  setTimeout(()=>sparkle.remove(),600);
 }
 
-// Random Golden Coin
-function spawnCoin() {
-  if (Math.random() < 0.25) {
-    const coin = document.createElement("div");
+// Random golden coin
+function spawnCoin(){
+  if(Math.random()<0.25){
+    const coin=document.createElement("div");
     coin.classList.add("coin");
-    coin.style.top = Math.random() * (window.innerHeight - 100) + "px";
-    coin.style.left = Math.random() * (window.innerWidth - 100) + "px";
+    coin.style.top=Math.random()*(window.innerHeight-100)+"px";
+    coin.style.left=Math.random()*(window.innerWidth-100)+"px";
     document.body.appendChild(coin);
 
-    coin.addEventListener("click", () => {
-      coinSound.currentTime = 0;
-      coinSound.play();
-      points *= 2;
+    coin.addEventListener("click",()=>{
+      coinSound.currentTime=0; coinSound.play();
+      points*=2;
       updateDisplay();
 
-      // Floating short-form points
-      const floatText = document.createElement("div");
-      floatText.textContent = "+" + formatShort(points);
-      floatText.style.position = "absolute";
-      floatText.style.left = coin.style.left;
-      floatText.style.top = coin.style.top;
-      floatText.style.color = "gold";
-      floatText.style.fontWeight = "bold";
-      floatText.style.fontSize = "20px";
-      floatText.style.pointerEvents = "none";
-      floatText.style.opacity = "1";
+      // Spin animation
+      coin.classList.add("coin-spin");
+
+      // Floating points
+      const floatText=document.createElement("div");
+      floatText.textContent="+"+formatShort(points);
+      floatText.style.position="absolute";
+      floatText.style.left=coin.style.left;
+      floatText.style.top=coin.style.top;
+      floatText.style.color="gold";
+      floatText.style.fontWeight="bold";
+      floatText.style.fontSize="20px";
+      floatText.style.pointerEvents="none";
+      floatText.style.opacity="1";
       document.body.appendChild(floatText);
 
-      let top = parseInt(coin.style.top);
-      let opacity = 1;
-      const anim = setInterval(() => {
-        top -= 1;
-        opacity -= 0.02;
-        floatText.style.top = top + "px";
-        floatText.style.opacity = opacity;
-        if (opacity <= 0) {
-          clearInterval(anim);
-          floatText.remove();
-        }
-      }, 16);
+      let top=parseInt(coin.style.top);
+      let opacity=1;
+      const anim=setInterval(()=>{
+        top-=1;
+        opacity-=0.02;
+        floatText.style.top=top+"px";
+        floatText.style.opacity=opacity;
+        if(opacity<=0){ clearInterval(anim); floatText.remove(); }
+      },16);
 
-      createSparkle(coin);
-      coin.remove();
+      setTimeout(()=>coin.remove(),800);
     });
 
-    setTimeout(() => coin.remove(), 4000);
+    setTimeout(()=>coin.remove(),4000);
   }
 }
 
-// Spawn coins every 5 seconds
-setInterval(spawnCoin, 5000);
-
-// Initial display
+setInterval(spawnCoin,5000);
 updateDisplay();
 </script>
 </body>
