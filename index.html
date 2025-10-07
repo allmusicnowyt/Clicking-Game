@@ -132,6 +132,7 @@ function formatShort(num) {
   return num.toString();
 }
 
+// --- DISPLAY UPDATE ---
 function updateDisplay(){
   pointsDisplay.textContent = formatShort(points);
   autoClickersDisplay.textContent = formatShort(autoClickers);
@@ -142,7 +143,7 @@ function updateDisplay(){
   localStorage.setItem("clickMultipliers", clickMultipliers);
 }
 
-// Click button
+// Click
 clickButton.addEventListener("click",()=>{
   clickSound.currentTime=0; clickSound.play();
   points += 1 + clickMultipliers;
@@ -214,29 +215,38 @@ function spawnCoin(){
 setInterval(spawnCoin,5000);
 
 // Submit Score to Dreamlo
-submitScoreBtn.addEventListener("click",()=>{
+submitScoreBtn.addEventListener("click", ()=>{
   const playerName = prompt("Enter your name:", "Player");
   if(!playerName) return;
-  const url = `http://dreamlo.com/lb/nQQcDbaRI0WCy5ReWthglQRb8dK3HlokiYy3WNiufC3w/add/${encodeURIComponent(playerName)}/${points}`;
-  fetch(url).then(()=>alert("Score submitted!")).catch(()=>alert("Failed to submit."));
+
+  // PRIVATE KEY
+  const privateKey = "nQQcDbaRI0WCy5ReWthglQRb8dK3HlokiYy3WNiufC3w";
+  const url = `http://dreamlo.com/lb/${privateKey}/add/${encodeURIComponent(playerName)}/${points}`;
+
+  fetch(url)
+    .then(() => alert("Score submitted successfully!"))
+    .catch(() => alert("Failed to submit score."));
 });
 
 // Live Leaderboard
 function updateLeaderboard(){
-  const publicUrl="http://dreamlo.com/lb/nQQcDbaRI0WCy5ReWthglQRb8dK3HlokiYy3WNiufC3w/pipe/";
-  fetch(publicUrl).then(res=>res.text()).then(data=>{
-    leaderboardEntries.innerHTML="";
-    const lines=data.split("\n");
-    lines.forEach((line,index)=>{
-      if(line.trim()==="") return;
-      const parts=line.split("|");
-      const name=parts[0];
-      const score=parts[1];
-      const entry=document.createElement("div");
-      entry.textContent=`${index+1}. ${name} - ${formatShort(parseInt(score))}`;
-      leaderboardEntries.appendChild(entry);
-    });
-  }).catch(err=>console.error(err));
+  const publicUrl = "http://dreamlo.com/lb/nQQcDbaRI0WCy5ReWthglQRb8dK3HlokiYy3WNiufC3w/pipe/";
+  fetch(publicUrl)
+    .then(res => res.text())
+    .then(data => {
+      leaderboardEntries.innerHTML = "";
+      const lines = data.split("\n");
+      lines.forEach((line,index)=>{
+        if(line.trim()==="") return;
+        const parts = line.split("|");
+        const name = parts[0];
+        const score = parts[1];
+        const entry = document.createElement("div");
+        entry.textContent = `${index+1}. ${name} - ${formatShort(parseInt(score))}`;
+        leaderboardEntries.appendChild(entry);
+      });
+    })
+    .catch(err=>console.error(err));
 }
 setInterval(updateLeaderboard,5000);
 updateLeaderboard();
